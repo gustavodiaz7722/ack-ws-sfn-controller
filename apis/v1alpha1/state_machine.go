@@ -42,6 +42,14 @@ type StateMachineSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable once set"
 	// +kubebuilder:validation:Required
 	Name *string `json:"name"`
+	// Whether to publish an immutable version of the state machine whenever its
+	// configuration is pushed to AWS. Versions are cut on create and on update, so
+	// leaving this set means every change to the state machine produces a version;
+	// AWS deduplicates per revision, so an unchanged configuration cuts nothing.
+	// Setting this back to false stops future versions being cut but does not delete
+	// any that already exist, and leaves stateMachineVersionARN naming the last one
+	// published. The default is false.
+	Publish *bool `json:"publish,omitempty"`
 	// The Amazon Resource Name (ARN) of the IAM role to use for this state machine.
 	RoleARN *string                                  `json:"roleARN,omitempty"`
 	RoleRef *ackv1alpha1.AWSResourceReferenceWrapper `json:"roleRef,omitempty"`
@@ -79,6 +87,18 @@ type StateMachineStatus struct {
 	// The date the state machine is created.
 	// +kubebuilder:validation:Optional
 	CreationDate *metav1.Time `json:"creationDate,omitempty"`
+	// The revision identifier for the state machine.
+	//
+	// Use the revisionId parameter to compare between versions of a state machine
+	// configuration used for executions without performing a diff of the properties,
+	// such as definition and roleArn.
+	// +kubebuilder:validation:Optional
+	RevisionID *string `json:"revisionID,omitempty"`
+	// The Amazon Resource Name (ARN) that identifies the created state machine
+	// version. If you do not set the publish parameter to true, this field returns
+	// null value.
+	// +kubebuilder:validation:Optional
+	StateMachineVersionARN *string `json:"stateMachineVersionARN,omitempty"`
 }
 
 // StateMachine is the Schema for the StateMachines API
